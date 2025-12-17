@@ -1,0 +1,69 @@
+[package]
+name = "vgen"
+version = "0.1.0"
+edition = "2021"
+authors = ["oritwoen"]
+description = "Bitcoin vanity address generator with regex pattern matching and GPU acceleration"
+license = "MIT"
+repository = "https://github.com/oritwoen/vgen"
+keywords = ["bitcoin", "vanity", "address", "gpu", "secp256k1"]
+categories = ["cryptography", "command-line-utilities"]
+
+[dependencies]
+# GPU Compute
+wgpu = "24.0"
+pollster = "0.4"
+bytemuck = { version = "1.19", features = ["derive"] }
+
+# Crypto
+bitcoin = { version = "0.32", features = ["rand", "secp-recovery"] }
+sha3 = "0.10"
+hex = "0.4"
+
+# Pattern Matching
+regex = "1.11"
+
+# CLI / IO
+clap = { version = "4", features = ["derive"] }
+indicatif = "0.17"
+anyhow = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+ctrlc = "3.4"
+
+# TUI
+crossterm = "0.28"
+ratatui = "0.29"
+
+# Parallelism
+rayon = "1.10"
+tokio = { version = "1.42", features = ["rt", "sync"] }
+
+# Utils
+rand = { version = "0.8", features = ["small_rng"] }
+num-bigint = "0.4"
+num-traits = "0.2"
+env_logger = "0.11"
+
+[dev-dependencies]
+sha2 = "0.10"
+criterion = "0.5"
+
+[[bin]]
+name = "vgen"
+path = "src/main.rs"
+
+[[bench]]
+name = "core_bench"
+harness = false
+
+[[bench]]
+name = "gpu_bench"
+harness = false
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
