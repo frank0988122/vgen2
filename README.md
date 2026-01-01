@@ -1,5 +1,7 @@
 # vgen
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/oritwoen/vgen)
+
 Bitcoin vanity address generator with regex pattern matching and GPU acceleration.
 
 > [!WARNING]
