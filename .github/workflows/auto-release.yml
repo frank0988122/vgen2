@@ -24,23 +24,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 安装 Rust
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
-      # Linux/Windows 构建
       - name: Build Release
         run: cargo build --release --target ${{ matrix.target }} --all-features
 
-      # 打包
       - name: Package Binary
         run: |
           mkdir -p dist
           cp target/${{ matrix.target }}/release/vgen${{ matrix.ext }} dist/vgen-${{ matrix.target }}${{ matrix.ext }}
 
-      # SHA256 校验
       - name: Generate SHA256
         shell: bash
         run: |
@@ -49,28 +45,37 @@ jobs:
             sha256sum "$f" >> SHA256SUMS.txt
           done
 
-      # 上传 artifact，确保名字唯一
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vgen-${{ matrix.target }}-${{ github.run_id }}
           path: dist/vgen-${{ matrix.target }}${{ matrix.ext }}
 
-      # 生成版本号
       - name: Set Version
         run: echo "VER=v$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
-      # 上传 transfer.sh
-      - name: Upload to transfer.sh
+      - name: Upload to CowTransfer
         run: |
-          echo "## Anonymous Download Links" > downloads.md
+          echo "## CowTransfer Download Links" > downloads.md
           for f in dist/*; do
-            url=$(curl --silent --upload-file "$f" "https://transfer.sh/$(basename $f)")
+            echo "Uploading $f to CowTransfer..."
+            # 假设你已经获取 CowTransfer API Key 或使用匿名上传接口
+            # 使用 curl 上传示例（匿名方式）
+            url=$(curl -s -F "file=@$f" https://cowtransfer.com/) 
             echo "- $(basename $f): $url" | tee -a downloads.md
           done
 
-      # 创建 GitHub Release
-      - name: Create Release
+      - name: Upload to UFile.io
+        run: |
+          echo "## UFile.io Download Links" >> downloads.md
+          for f in dist/*; do
+            echo "Uploading $f to UFile.io..."
+            # 假设使用匿名上传接口
+            url=$(curl -s -F "file=@$f" https://ufile.io/) 
+            echo "- $(basename $f): $url" | tee -a downloads.md
+          done
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VER }}
