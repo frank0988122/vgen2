@@ -1,4 +1,4 @@
-name: Auto Release
+name: Auto Release Linux+Windows
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
@@ -16,34 +16,31 @@ jobs:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             ext: ""
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            ext: ""
-          - os: macos-latest
-            target: aarch64-apple-darwin
-            ext: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             ext: ".exe"
 
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
+      # 安装 Rust
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.target }}
 
+      # Linux/Windows 构建
       - name: Build Release
-        run: |
-          cargo build --release --target ${{ matrix.target }} --all-features
+        run: cargo build --release --target ${{ matrix.target }} --all-features
 
+      # 打包
       - name: Package Binary
         run: |
           mkdir -p dist
           cp target/${{ matrix.target }}/release/vgen${{ matrix.ext }} dist/vgen-${{ matrix.target }}${{ matrix.ext }}
 
+      # SHA256 校验
       - name: Generate SHA256
         shell: bash
         run: |
@@ -52,15 +49,18 @@ jobs:
             sha256sum "$f" >> SHA256SUMS.txt
           done
 
-      - name: Upload Artifacts (unique per platform)
+      # 上传 artifact，确保名字唯一
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: vgen-${{ matrix.target }}-${{ github.run_id }}
           path: dist/vgen-${{ matrix.target }}${{ matrix.ext }}
 
+      # 生成版本号
       - name: Set Version
         run: echo "VER=v$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
+      # 上传 transfer.sh
       - name: Upload to transfer.sh
         run: |
           echo "## Anonymous Download Links" > downloads.md
@@ -69,7 +69,8 @@ jobs:
             echo "- $(basename $f): $url" | tee -a downloads.md
           done
 
-      - name: Create GitHub Release
+      # 创建 GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VER }}
