@@ -54,24 +54,14 @@ jobs:
       - name: Set Version
         run: echo "VER=v$(date +'%Y%m%d-%H%M')" >> $GITHUB_ENV
 
-      - name: Upload to CowTransfer
+      - name: Upload to GoFile.io
         run: |
-          echo "## CowTransfer Download Links" > downloads.md
+          echo "## GoFile.io Download Links" > downloads.md
           for f in dist/*; do
-            echo "Uploading $f to CowTransfer..."
-            # 假设你已经获取 CowTransfer API Key 或使用匿名上传接口
-            # 使用 curl 上传示例（匿名方式）
-            url=$(curl -s -F "file=@$f" https://cowtransfer.com/) 
-            echo "- $(basename $f): $url" | tee -a downloads.md
-          done
-
-      - name: Upload to UFile.io
-        run: |
-          echo "## UFile.io Download Links" >> downloads.md
-          for f in dist/*; do
-            echo "Uploading $f to UFile.io..."
-            # 假设使用匿名上传接口
-            url=$(curl -s -F "file=@$f" https://ufile.io/) 
+            echo "Uploading $f to GoFile.io..."
+            response=$(curl -s -F "file=@$f" https://store1.gofile.io/uploadFile)
+            # 解析 JSON 获取 direct download link
+            url=$(echo "$response" | python3 -c "import sys, json; print(json.load(sys.stdin)['data']['downloadPage'])")
             echo "- $(basename $f): $url" | tee -a downloads.md
           done
 
